@@ -53,7 +53,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         private void InitSubscription()
         {
             var consumer = new AsyncEventingBasicConsumer(_channel);
-            
+            var x = 1;
             consumer.Received += OnMessageReceivedAsync;
             
             _channel.BasicConsume(queue: _queue.QueueName, autoAck: false, consumer: consumer);
