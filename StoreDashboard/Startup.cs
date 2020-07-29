@@ -8,18 +8,25 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
 using StoreDashboard.Data;
+using WebApiWithBackgroundWorker.Common.Messaging;
+using WebApiWithBackgroundWorker.Subscriber.Messaging;
 
 namespace StoreDashboard
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -29,6 +36,46 @@ namespace StoreDashboard
             services.AddServerSideBlazor();
             services.AddControllersWithViews();
             services.AddSingleton<WeatherForecastService>();
+
+
+            // Rabbit MQ config Stuff
+            
+            services.AddSingleton<IMessagesRepository, InMemoryMessagesRepository>();
+            services.AddSingleton<IConnectionFactory>(ctx =>
+            {
+                var connStr = this.Configuration["rabbit"];
+                return new ConnectionFactory()
+                {
+                    Uri = new Uri(connStr),
+                    DispatchConsumersAsync = true // this is mandatory to have Async Subscribers
+                };
+            });
+            services.AddSingleton<IBusConnection, RabbitPersistentConnection>();
+            services.AddSingleton<ISubscriber, RabbitSubscriber>();
+
+            var channel = System.Threading.Channels.Channel.CreateBounded<Message>(100);
+            services.AddSingleton(channel);
+
+            services.AddSingleton<IProducer>(ctx => {
+                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<Message>>();
+                var logger = ctx.GetRequiredService<ILogger<Producer>>();
+                return new Producer(channel.Writer, logger);
+            });
+
+            services.AddSingleton<IEnumerable<IConsumer>>(ctx => {
+                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<Message>>();
+                var logger = ctx.GetRequiredService<ILogger<Consumer>>();
+                var repo = ctx.GetRequiredService<IMessagesRepository>();
+
+                var consumers = Enumerable.Range(1, 10)
+                                          .Select(i => new Consumer(channel.Reader, logger, i, repo))
+                                          .ToArray();
+                return consumers;
+            });
+            services.AddHostedService<BackgroundSubscriberWorker>();
+            
+            // END  Rabbit MQ config Stuff
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
