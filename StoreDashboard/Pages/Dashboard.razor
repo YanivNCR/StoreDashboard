@@ -1,59 +1,77 @@
 ﻿@using StoreDashboard.Model
 @using StoreDashboard.BusinessComponents
+@using System.Globalization
 @page "/dashboard"
 
 <div class="jumbotron text-left">
-    <h1>Store Dashboard</h1>
-    <p>Welcome to store dashboard</p>
+    <div class="container">
+        <h1>Store Dashboard</h1>
+        <p>Store Data:</p>
+        <div class="row">
+            <div class="col-md-12 p-2">
+                <RadzenChart>
+                    <RadzenLineSeries Smooth="@false" Data="@store.Data.RevenueByYearsData["2019"]" CategoryProperty="Date" Title="2019" LineType="LineType.Dashed" ValueProperty="Revenue">
+                        <RadzenMarkers MarkerType="MarkerType.Square" />
+                    </RadzenLineSeries>
+                    <RadzenLineSeries Smooth="@false" Data="@store.Data.RevenueByYearsData["2020"]" CategoryProperty="Date" Title="2020" ValueProperty="Revenue">
+                        <RadzenMarkers MarkerType="MarkerType.Circle" />
+                    </RadzenLineSeries>
+                    <RadzenCategoryAxis Padding="20" FormatString="{0:MMM}" />
+                    <RadzenValueAxis Formatter="@FormatAsUSD">
+                        <RadzenGridLines Visible="true" />
+                        <RadzenAxisTitle Text="Revenue in USD" />
+                    </RadzenValueAxis>
+                </RadzenChart>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div class="container">
     <div class="row">
-
-        @for (int i = 0; i < dashboardItems.Count; i++)
-        {
-            var dashboardItem = dashboardItems[i];
-            @if (i > 0 && i % dashItemsInRow == 0)
-            {
-                @:</div>
-                @:<div class="row dsf">
-                
-            }
-
-            <div class="col-sm-@(12/ dashItemsInRow)">
-                <div class="card">
-                    <div class="card-header">Pos Id: @dashboardItem.Pos.Id</div>
-                    <div class="card-body">Transaction Id: @dashboardItem.Pos.TransactionId</div>
-                    <div class="card-footer">Footer</div>
-                </div>
-            </div>
-        }
-
-        @*@foreach (var dashboardItem in dashboardItems)
+        @foreach (var dashboardItem in dashboardItems)
         {
             <div class="col-sm-4">
-                <div class="card">
+                <div class="card m-2">
                     <div class="card-header">Pos Id: @dashboardItem.Pos.Id</div>
-                    <div class="card-body">Transaction Id: @dashboardItem.Pos.TransactionId</div>
-                    <div class="card-footer">Footer</div>
+                    <div class="card-body">
+                        <RadzenChart>
+                            <RadzenPieSeries Data="@dashboardItem.Pos.Data.QuartersData" Title="Revenue" CategoryProperty="Quarter" ValueProperty="Revenue" />
+                        </RadzenChart>
+                    </div>
+                    <div class="card-footer">Transaction Id: @dashboardItem.Pos.TransactionId</div>
                 </div>
             </div>
 
-        }*@
+        }
 
     </div>
 </div>
 @code {
     private IList<DashboardItem> dashboardItems = new List<DashboardItem>();
+    private Store store;
     private const int dashItemsInRow = 3;
 
     protected override async Task OnInitializedAsync()
     {
+        GetStore();
         RenderDashboardItems();
     }
     public void RenderDashboardItems()
     {
         var dashboardBc = new DashboardBusinessComponent();
         dashboardItems = dashboardBc.GetDashboardItems();
+    }
+
+    public void GetStore()
+    {
+        var dashboardBc = new DashboardBusinessComponent();
+        store = dashboardBc.GetStoreAsync().Result;
+    }
+
+    string FormatAsUSD(object value)
+    {
+        return ((double)value).ToString("C0", CultureInfo.CreateSpecificCulture("en-US"));
     }
 }

@@ -13,6 +13,7 @@ using RabbitMQ.Client;
 using StoreDashboard.Data;
 using WebApiWithBackgroundWorker.Common.Messaging;
 using WebApiWithBackgroundWorker.Subscriber.Messaging;
+using Radzen;
 
 namespace StoreDashboard
 {
@@ -36,10 +37,12 @@ namespace StoreDashboard
             services.AddServerSideBlazor();
             services.AddControllersWithViews();
             services.AddSingleton<WeatherForecastService>();
+            services.AddScoped<DialogService>();
+            services.AddScoped<NotificationService>();
 
 
             // Rabbit MQ config Stuff
-            
+
             services.AddSingleton<IMessagesRepository, InMemoryMessagesRepository>();
             services.AddSingleton<IConnectionFactory>(ctx =>
             {

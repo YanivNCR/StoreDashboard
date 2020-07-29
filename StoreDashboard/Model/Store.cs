@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace StoreDashboard.Model
 {
-    public class Pos
+    public class Store
     {
         public string Id { get; set; }
-        public string TransactionId { get; set; }
-        public PosData Data { get; set; }
+        
+        public StoreData Data { get; set; }
     }
 }

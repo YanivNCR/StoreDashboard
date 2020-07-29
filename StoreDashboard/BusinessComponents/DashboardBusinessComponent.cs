@@ -18,6 +18,14 @@ namespace StoreDashboard.BusinessComponents
             _dashboardController = new DashboardController();
         }
 
+        public async Task<Store> GetStoreAsync()
+        {
+            var storeId = DashboardConfig.StoreId;
+            var dashboardService = new DashboardService();
+            var store = await dashboardService.GetStore(storeId);
+            return store;
+        }
+
         public List<DashboardItem> GetDashboardItems()
         {
             var dashboardItems = CreateDashboardItemsAsync();
