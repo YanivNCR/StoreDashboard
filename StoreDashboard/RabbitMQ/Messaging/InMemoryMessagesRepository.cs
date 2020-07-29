@@ -2,6 +2,7 @@
 using StoreDashboard.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using WebApiWithBackgroundWorker.Common.Messaging;
 
@@ -24,6 +25,13 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         public IReadOnlyCollection<MessageWrapper> GetMessages()
         {
             return _messages.ToArray();
+        }
+
+
+        public IEnumerable<MessageWrapper> GetMessagesEnumerable()
+        {
+            var x = _messages.ToList();
+            return x ;
         }
     }
 }

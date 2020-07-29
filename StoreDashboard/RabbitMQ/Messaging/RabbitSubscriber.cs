@@ -123,13 +123,13 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         {
             int counter = 0;
             //_hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", "yesh?");
-            foreach (var message in _messagesRepository.GetMessages())
+            foreach (var message in _messagesRepository.GetMessagesEnumerable())
             {
                 if (message == null)
                 {
                     continue;
                 }
-                if (counter > 5)
+                if (counter > 100)
                 {
                     break;
                 }

@@ -9,5 +9,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
     {
         void Add(MessageWrapper message);
         IReadOnlyCollection<MessageWrapper> GetMessages();
+        IEnumerable<MessageWrapper> GetMessagesEnumerable();
+
     }
 }
