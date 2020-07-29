@@ -41,6 +41,7 @@ namespace StoreDashboard
             services.AddScoped<DialogService>();
             services.AddScoped<NotificationService>();
 
+            services.AddSignalR();
 
             // Rabbit MQ config Stuff
 
@@ -88,6 +89,7 @@ namespace StoreDashboard
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseWebAssemblyDebugging();
             }
             else
             {

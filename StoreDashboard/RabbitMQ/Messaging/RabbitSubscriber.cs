@@ -8,20 +8,27 @@ using RabbitMQ.Client.Events;
 using WebApiWithBackgroundWorker.Common.Messaging;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
+using BlazorChatSample.Server.Hubs;
+using System.Timers;
+using BlazorChatSample.Shared;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
     public class RabbitSubscriber : ISubscriber, IDisposable
     {
         private readonly IBusConnection _connection;
+        private readonly IHubContext<ChatHub> _hubContext;
         private IModel _channel;
         private QueueDeclareOk _queue;
+        private static System.Timers.Timer _aTimer;
 
         private const string ExchangeName = "DataEventPublisher";
 
-        public RabbitSubscriber(IBusConnection connection)
+        public RabbitSubscriber(IBusConnection connection, IHubContext<ChatHub> hubContext)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            this._hubContext = hubContext;
         }
 
         private void InitChannel()
@@ -81,6 +88,22 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         {
             InitChannel();
             InitSubscription();
+            InitTimer();
+        }
+
+        private void InitTimer()
+        {
+            // Create a timer with a two second interval.
+            _aTimer = new System.Timers.Timer(10000);
+            // Hook up the Elapsed event for the timer. 
+            _aTimer.Elapsed += OnTimedEvent;
+            _aTimer.AutoReset = true;
+            _aTimer.Enabled = true;
+        }
+
+        private void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+            _hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", "yesh?");
         }
 
         public void Dispose()
