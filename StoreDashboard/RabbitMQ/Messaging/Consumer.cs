@@ -35,6 +35,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
                     _logger.LogInformation($"CONSUMER ({_instanceId})> Received message {message.Id} : {message.Text}");
                     await Task.Delay(500, cancellationToken);
                     _messagesRepository.Add(message);
+
                 }
             }
             catch (OperationCanceledException ex)

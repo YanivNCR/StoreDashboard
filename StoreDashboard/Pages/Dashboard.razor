@@ -1,6 +1,8 @@
 ﻿@using StoreDashboard.Model
 @using StoreDashboard.BusinessComponents
 @using System.Globalization
+@using BlazorChatSample.Shared
+@inject NavigationManager navigationManager
 @page "/dashboard"
 
 <div class="jumbotron text-left">
@@ -29,6 +31,8 @@
 </div>
 
 <div class="container">
+    <button type="button" @onclick="@Chat"><span class="oi oi-chat" aria-hidden="true"></span> Chat!</button>
+
     <div class="row">
         @foreach (var dashboardItem in dashboardItems)
         {
@@ -74,4 +78,130 @@
     {
         return ((double)value).ToString("C0", CultureInfo.CreateSpecificCulture("en-US"));
     }
+}
+
+
+@code  {
+    // flag to indicate chat status
+    bool chatting = false;
+
+    // name of the user who will be chatting
+    string username = null;
+
+    ChatClient client = null;
+
+    // on-screen message
+    string message = null;
+
+    // new message input
+    string newMessage = null;
+
+    // list of messages in chat
+    List<Message> messages = new List<Message>();
+
+    /// <summary>
+    /// Start chat client
+    /// </summary>
+    async Task Chat()
+    {
+        // check username is valid
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            message = "Please enter a name 1";
+            return;
+        };
+
+        try
+        {
+            // remove old messages if any
+            messages.Clear();
+
+            // Create the chat client
+            string baseUrl = navigationManager.BaseUri;
+            client = new ChatClient(username, baseUrl);
+            // add an event handler for incoming messages
+            client.MessageReceived += MessageReceived;
+            // start the client
+            Console.WriteLine("Index: chart starting...");
+            await client.StartAsync();
+            Console.WriteLine("Index: chart started?");
+
+            chatting = true;
+        }
+        catch (Exception e)
+        {
+            message = $"ERROR: Failed to start chat client: {e.Message}";
+            Console.WriteLine(e.Message);
+            Console.WriteLine(e.StackTrace);
+        }
+    }
+
+    /// <summary>
+    /// Inbound message
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    void MessageReceived(object sender, MessageReceivedEventArgs e)
+    {
+        Console.WriteLine($"Blazor: receive {e.Username}: {e.Message}");
+        bool isMine = false;
+        if (!string.IsNullOrWhiteSpace(e.Username))
+        {
+            isMine = string.Equals(e.Username, username, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        var newMsg = new Message(e.Username, e.Message, isMine);
+        messages.Add(newMsg);
+
+        // Inform blazor the UI needs updating
+        StateHasChanged();
+    }
+
+    async Task DisconnectAsync()
+    {
+        if (chatting)
+        {
+            await client.StopAsync();
+            client = null;
+            message = "chat ended";
+            chatting = false;
+        }
+    }
+
+    async Task SendAsync()
+    {
+        if (chatting && !string.IsNullOrWhiteSpace(newMessage))
+        {
+            // send message to hub
+            await client.SendAsync(newMessage);
+            // clear input box
+            newMessage = "";
+        }
+    }
+
+    class Message
+    {
+        public Message(string username, string body, bool mine)
+        {
+            Username = username;
+            Body = body;
+            Mine = mine;
+        }
+
+        public string Username { get; set; }
+        public string Body { get; set; }
+        public bool Mine { get; set; }
+
+        /// <summary>
+        /// Determine CSS classes to use for message div
+        /// </summary>
+        public string CSS
+        {
+            get
+            {
+                return Mine ? "sent" : "received";
+            }
+        }
+    }
+
 }

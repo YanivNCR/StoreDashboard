@@ -36,7 +36,16 @@ namespace WebApiWithBackgroundWorker.Common.Messaging
                 if (IsConnected)
                     return;
 
-                _connection = _connectionFactory.CreateConnection();
+                try
+              {
+                    _connection = _connectionFactory.CreateConnection();
+
+                }
+                catch (Exception e)
+                {
+
+                    throw;
+                }
                 _connection.ConnectionShutdown += (s, e) => TryConnect();
                 _connection.CallbackException += (s, e) => TryConnect();
                 _connection.ConnectionBlocked += (s, e) => TryConnect();

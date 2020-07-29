@@ -14,6 +14,7 @@ using StoreDashboard.Data;
 using WebApiWithBackgroundWorker.Common.Messaging;
 using WebApiWithBackgroundWorker.Subscriber.Messaging;
 using Radzen;
+using BlazorChatSample.Shared;
 
 namespace StoreDashboard
 {
@@ -99,9 +100,12 @@ namespace StoreDashboard
 
             app.UseEndpoints(endpoints =>
             {
+                // SignalR endpoint routing setup
+                endpoints.MapHub<BlazorChatSample.Server.Hubs.ChatHub>(ChatClient.HUBURL);
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
+            
         }
     }
 }

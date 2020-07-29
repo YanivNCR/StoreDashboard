@@ -17,7 +17,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         private IModel _channel;
         private QueueDeclareOk _queue;
 
-        private const string ExchangeName = "GloryRawQueue";
+        private const string ExchangeName = "DataEventPublisher";
 
         public RabbitSubscriber(IBusConnection connection)
         {
@@ -30,12 +30,12 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
             
             _channel = _connection.CreateChannel();
 
-            _channel.ExchangeDeclare(exchange: ExchangeName, type: ExchangeType.Direct);
+            _channel.ExchangeDeclare(exchange: ExchangeName, type: ExchangeType.Fanout, true, false, null);
             
             // since we're using a Fanout exchange, we don't specify the name of the queue
             // but we let Rabbit generate one for us. This also means that we need to store the
             // queue name to be able to consume messages from it
-            _queue = _channel.QueueDeclare(queue: ExchangeName,
+            _queue = _channel.QueueDeclare(queue: "DataEventPublisherQueue",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
