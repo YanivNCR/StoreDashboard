@@ -13,6 +13,9 @@ using BlazorChatSample.Server.Hubs;
 using System.Timers;
 using BlazorChatSample.Shared;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
@@ -24,6 +27,8 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         private IModel _channel;
         private QueueDeclareOk _queue;
         private static System.Timers.Timer _aTimer;
+        private readonly JsonSerializerSettings _jsonSettings;
+
 
         private const string ExchangeName = "DataEventPublisher";
 
@@ -32,6 +37,11 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this._hubContext = hubContext;
             this._messagesRepository = messagesRepository;
+            //_jsonSettings = new JsonSerializerSettings
+            //{
+            //    Converters = new List<JsonConverter> { new StringEnumConverter(), new ExtensibleEnumBaseConverter() },
+            //    ContractResolver = new CamelCasePropertyNamesContractResolver()
+            //};
         }
 
         private void InitChannel()
@@ -75,6 +85,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
             {
                 var body = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
                 //var message = JsonSerializer.Deserialize<Message>(body);
+                // var json = JsonConvert.DeserializeObject(body, _jsonSettings);
                 var message = JObject.Parse(body);
                 await this.OnMessage(this, new RabbitSubscriberEventArgs(message));
             }
@@ -101,7 +112,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
             _aTimer = new System.Timers.Timer(20000);
             // Hook up the Elapsed event for the timer. 
             _aTimer.Elapsed += OnTimedEvent;
-            _aTimer.AutoReset = false;
+            _aTimer.AutoReset = true;
             _aTimer.Enabled = true;
         }
 
