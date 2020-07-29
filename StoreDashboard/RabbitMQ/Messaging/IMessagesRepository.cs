@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using WebApiWithBackgroundWorker.Common.Messaging;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
     public interface IMessagesRepository
     {
-        void Add(Message message);
-        IReadOnlyCollection<Message> GetMessages();
+        void Add(JObject message);
+        IReadOnlyCollection<JObject> GetMessages();
     }
 }

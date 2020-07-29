@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.SignalR;
 using BlazorChatSample.Server.Hubs;
 using System.Timers;
 using BlazorChatSample.Shared;
+using Newtonsoft.Json.Linq;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
@@ -19,16 +20,18 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
     {
         private readonly IBusConnection _connection;
         private readonly IHubContext<ChatHub> _hubContext;
+        private readonly IMessagesRepository _messagesRepository;
         private IModel _channel;
         private QueueDeclareOk _queue;
         private static System.Timers.Timer _aTimer;
 
         private const string ExchangeName = "DataEventPublisher";
 
-        public RabbitSubscriber(IBusConnection connection, IHubContext<ChatHub> hubContext)
+        public RabbitSubscriber(IBusConnection connection, IHubContext<ChatHub> hubContext, IMessagesRepository messagesRepository)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this._hubContext = hubContext;
+            this._messagesRepository = messagesRepository;
         }
 
         private void InitChannel()
@@ -71,7 +74,8 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
             try
             {
                 var body = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
-                var message = JsonSerializer.Deserialize<Message>(body);
+                //var message = JsonSerializer.Deserialize<Message>(body);
+                var message = JObject.Parse(body);
                 await this.OnMessage(this, new RabbitSubscriberEventArgs(message));
             }
             catch (Exception e)
@@ -94,16 +98,24 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
         private void InitTimer()
         {
             // Create a timer with a two second interval.
-            _aTimer = new System.Timers.Timer(10000);
+            _aTimer = new System.Timers.Timer(20000);
             // Hook up the Elapsed event for the timer. 
             _aTimer.Elapsed += OnTimedEvent;
-            _aTimer.AutoReset = true;
+            _aTimer.AutoReset = false;
             _aTimer.Enabled = true;
         }
 
         private void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
             _hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", "yesh?");
+            foreach (var message in _messagesRepository.GetMessages())
+            {
+                if (message == null)
+                {
+                    continue;
+                }
+                _hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", message.ToString());
+            }
         }
 
         public void Dispose()

@@ -29,7 +29,7 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
  
         private async Task OnMessageAsync(object sender, RabbitSubscriberEventArgs args)
         {
-            _logger.LogInformation($"got a new message: {args.Message.Text} at {args.Message.CreationDate}");
+            _logger.LogInformation($"got a new message: {args.Message} at {args.Message}");
 
             await _producer.PublishAsync(args.Message);
         }

@@ -15,6 +15,7 @@ using WebApiWithBackgroundWorker.Common.Messaging;
 using WebApiWithBackgroundWorker.Subscriber.Messaging;
 using Radzen;
 using BlazorChatSample.Shared;
+using Newtonsoft.Json.Linq;
 
 namespace StoreDashboard
 {
@@ -58,17 +59,17 @@ namespace StoreDashboard
             services.AddSingleton<IBusConnection, RabbitPersistentConnection>();
             services.AddSingleton<ISubscriber, RabbitSubscriber>();
 
-            var channel = System.Threading.Channels.Channel.CreateBounded<Message>(100);
+            var channel = System.Threading.Channels.Channel.CreateBounded<JObject>(100);
             services.AddSingleton(channel);
 
             services.AddSingleton<IProducer>(ctx => {
-                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<Message>>();
+                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<JObject>>();
                 var logger = ctx.GetRequiredService<ILogger<Producer>>();
                 return new Producer(channel.Writer, logger);
             });
 
             services.AddSingleton<IEnumerable<IConsumer>>(ctx => {
-                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<Message>>();
+                var channel = ctx.GetRequiredService<System.Threading.Channels.Channel<JObject>>();
                 var logger = ctx.GetRequiredService<ILogger<Consumer>>();
                 var repo = ctx.GetRequiredService<IMessagesRepository>();
 
