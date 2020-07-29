@@ -5,19 +5,20 @@ using System;
 using WebApiWithBackgroundWorker.Common.Messaging;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using StoreDashboard.Model;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
     public class Consumer : IConsumer
     {
-        private readonly ChannelReader<JObject> _reader;
+        private readonly ChannelReader<MessageWrapper> _reader;
         private readonly ILogger<Consumer> _logger;
 
         private readonly IMessagesRepository _messagesRepository;
         private readonly int _instanceId;
         private static readonly Random Random = new Random();
 
-        public Consumer(ChannelReader<JObject> reader, ILogger<Consumer> logger, int instanceId, IMessagesRepository messagesRepository)
+        public Consumer(ChannelReader<MessageWrapper> reader, ILogger<Consumer> logger, int instanceId, IMessagesRepository messagesRepository)
         {
             _reader = reader;
             _instanceId = instanceId;

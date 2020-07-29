@@ -16,6 +16,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using StoreDashboard.Model;
 
 namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
@@ -87,7 +88,9 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
                 //var message = JsonSerializer.Deserialize<Message>(body);
                 // var json = JsonConvert.DeserializeObject(body, _jsonSettings);
                 var message = JObject.Parse(body);
-                await this.OnMessage(this, new RabbitSubscriberEventArgs(message));
+                string eventType = message.GetValue("eventType").ToString();
+                MessageWrapper messageWrapper = new MessageWrapper { Type = eventType, ObjectAsJObject = message };
+                await this.OnMessage(this, new RabbitSubscriberEventArgs(messageWrapper));
             }
             catch (Exception e)
             {
@@ -118,14 +121,20 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 
         private void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
-            _hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", "yesh?");
+            int counter = 0;
+            //_hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", "yesh?");
             foreach (var message in _messagesRepository.GetMessages())
             {
                 if (message == null)
                 {
                     continue;
                 }
-                _hubContext.Clients.All.SendAsync(Messages.RECEIVE, "yeh?", message.ToString());
+                if (counter > 5)
+                {
+                    break;
+                }
+                _hubContext.Clients.All.SendAsync(Messages.RECEIVE, message.Type, message.ObjectAsJObject.ToString());
+                counter++;
             }
         }
 

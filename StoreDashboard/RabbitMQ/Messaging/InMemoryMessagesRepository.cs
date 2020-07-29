@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using StoreDashboard.Model;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,19 +9,19 @@ namespace WebApiWithBackgroundWorker.Subscriber.Messaging
 {
     public class InMemoryMessagesRepository : IMessagesRepository
     {
-        private readonly Queue<JObject> _messages;
+        private readonly Queue<MessageWrapper> _messages;
 
         public InMemoryMessagesRepository()
         {
-            _messages = new Queue<JObject>();
+            _messages = new Queue<MessageWrapper>();
         }
 
-        public void Add(JObject message)
+        public void Add(MessageWrapper message) 
         {
             _messages.Enqueue(message ?? throw new ArgumentNullException(nameof(message)));
         }
 
-        public IReadOnlyCollection<JObject> GetMessages()
+        public IReadOnlyCollection<MessageWrapper> GetMessages()
         {
             return _messages.ToArray();
         }
